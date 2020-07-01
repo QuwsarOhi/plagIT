@@ -7,8 +7,8 @@ __pycache__/
 *.so
 
 # Environment files
-codes/
-logs/
+#codes/
+#logs/
 codetowin*
 
 # Distribution / packaging
