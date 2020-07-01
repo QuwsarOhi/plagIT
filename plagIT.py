@@ -7,16 +7,6 @@ import string
 from glob import glob
 from difflib import SequenceMatcher
 
-# Defining colors
-HEADER = '\033[95m'
-OKBLUE = '\033[94m'
-OKGREEN = '\033[92m'
-WARNING = '\033[93m'
-FAIL = '\033[91m'
-ENDC = '\033[0m'
-BOLD = '\033[1m'
-UNDERLINE = '\033[4m'
-
 HELP = \
 """
 ------------------------------------------------------
@@ -108,10 +98,11 @@ def matcher(file1, file2):
 
 
 THRES = 0.85
-def checkall():
+def checkall(log=False):
 	extentions = ['c', 'cpp', 'py', 'java']
 	path = os.path.join('codes', '*.')
 	filedirs = []
+	logindex = 0
 
 	for ext in extentions:
 		filedirs = filedirs + glob(path+ext, recursive=True)
@@ -121,20 +112,62 @@ def checkall():
 		for j in range(i+1, totalfiles):
 			ratio = matcher(filedirs[i], filedirs[j])
 			if ratio >= THRES:
+				if log == True:
+					makelog(filedirs[i], filedirs[j], ratio, logid=logindex)
+					logindex += 1
 				print(os.path.split(filedirs[i])[-1], 
 					  os.path.split(filedirs[j])[-1], 
 					  ratio)
 
 
+# the log writer
+def makelog(file1, file2, ratio, logid=0):
+	fname1 = os.path.split(file1)[-1]
+	fname2 = os.path.split(file2)[-1]
+	full_match = False
+
+	if ratio == 1:
+		with open(file1) as f1:
+			with open(file2) as f2:
+				if f1.read() == f2.read():
+					full_match = True
+	
+	writer = "Match Ratio: " + str(ratio) + "\nFull Match: " + str(full_match) + "\n\n"
+
+	writer += fname1 + "\n" + "-"*30 + "\n"
+	with open(file1) as f:
+		writer += f.read()
+
+	writer += "\n\n" + fname2 + "\n" + "-"*30 + "\n"
+	with open(file2) as f:
+		writer += f.read()
+
+	logpath = os.path.join('logs')
+	if not os.path.exists(logpath):
+		os.mkdir(logpath)
+	with open(os.path.join(logpath, f"{logid}.txt"), "w") as f:
+		f.write(writer)
+
+
 if __name__ == "__main__":
 	if len(sys.argv) > 1 and sys.argv[1].startswith("-h"):
 		print(HELP)	
-	elif len(sys.argv) == 3:
+	elif len(sys.argv) >= 3:
 		file1 = sys.argv[1]
 		file2 = sys.argv[2]
-		print(matcher(file1, file2))
+		ratio = matcher(file1, file2)
+		print(ratio)
+		if sys.argv[-1].startswith('-l'):
+			delim = (sys.argv[-1].split())
+			if delim > 1:
+				makelog(file1, file2, ratio, logid=delim[-1])
+			else:
+				makelog(file1, file2, ratio, logid=0)
 	else:
 		if os.path.exists('codes'):
-			checkall()
+			if sys.argv[-1].startswith('-l'):
+				checkall(log=True)
+			else:
+				checkall()
 		else:
 			print(ERR)
