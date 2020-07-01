@@ -4,8 +4,10 @@ import sys
 import os
 import re
 import string
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from glob import glob
 from difflib import SequenceMatcher
+
 
 HELP = \
 """
@@ -22,17 +24,11 @@ changes and tries to match two or more scripts.
 plagIT currently supports plagiarism check on c, c++, python, and 
 java.
 
----------------------
-Command instructions:
----------------------
 Currently, two types of instructions are available. 
 
 * A versus check that checks for a match in single pair of files.
-command: "plagIT [filedirectory1] [filedirectory2]"
-
 * A batch check that checks for a match for all possible pairs of 
   files. All the files must be in the "codes" folder. 
-command: "plagIT"
 """
 ERR = \
 """\n'codes' directory not found!
@@ -46,10 +42,13 @@ def extract_keywords(lang):
 		with open(os.path.join('keywords', 'cpp.txt')) as f:
 			return f.read().split()
 	elif lang == "py":
-		pass
+		with open(os.path.join('keywords', 'python.txt')) as f:
+			return f.read().split()
 	elif lang == "java":
-		pass
-
+		with open(os.path.join('keywords', 'java.txt')) as f:
+			return f.read().split()
+	else:
+		raise NameError('Invalid file name extention', lang)
 
 
 # extracts the script type using file name
@@ -59,7 +58,7 @@ def script_type(filedir):
 
 
 # the parser parses the input script files based
-def parser(filedir):
+def codeParser(filedir):
     ret = []
     keywords = set(extract_keywords(script_type(filedir)))
 
@@ -90,8 +89,8 @@ def parser(filedir):
 
 # check for match between two files
 def matcher(file1, file2):
-	parsed1 = parser(file1)
-	parsed2 = parser(file2)
+	parsed1 = codeParser(file1)
+	parsed2 = codeParser(file2)
 
 	match_ratio = round(SequenceMatcher(None, parsed1, parsed2).ratio(), 2)
 	return match_ratio
@@ -150,23 +149,30 @@ def makelog(file1, file2, ratio, logid=0):
 
 
 if __name__ == "__main__":
-	if len(sys.argv) > 1 and sys.argv[1].startswith("-h"):
-		print(HELP)	
-	elif len(sys.argv) >= 3:
-		file1 = sys.argv[1]
-		file2 = sys.argv[2]
+	parser = ArgumentParser(prog="plagIT",
+							formatter_class=RawDescriptionHelpFormatter,
+							description=HELP
+						   )
+	parser.add_argument('-f', metavar='file', nargs=2, 
+						help='check plagiarism for two input files')
+	parser.add_argument('-t', metavar='threshold', 
+						help='defines threshold [0, 1] of the match (default=0.85)')
+	parser.add_argument('-l', metavar='filename', nargs='?', default='0',
+		                help='create log file')
+	args = parser.parse_args()
+
+	if args.t:
+		THRES = float(args.t)
+	
+	if args.f:
+		file1 = args.f[0]
+		file2 = args.f[1]
 		ratio = matcher(file1, file2)
 		print("Ratio:", ratio)
-		if sys.argv[-1].startswith('-l') and ratio >= THRES:
-			if len(sys.argv[-1]) > 2:
-				makelog(file1, file2, ratio, logid=sys.argv[-1][2:])
-			else:
-				makelog(file1, file2, ratio, logid=0)
+		if args.l != '0' and ratio >= THRES:
+			makelog(file1, file2, ratio, logid=args.l)
 	else:
 		if os.path.exists('codes'):
-			if sys.argv[-1].startswith('-l'):
-				checkall(log=True)
-			else:
-				checkall()
+			checkall(log=(args.l != '0'))
 		else:
 			print(ERR)
