@@ -156,11 +156,10 @@ if __name__ == "__main__":
 		file1 = sys.argv[1]
 		file2 = sys.argv[2]
 		ratio = matcher(file1, file2)
-		print(ratio)
-		if sys.argv[-1].startswith('-l'):
-			delim = (sys.argv[-1].split())
-			if delim > 1:
-				makelog(file1, file2, ratio, logid=delim[-1])
+		print("Ratio:", ratio)
+		if sys.argv[-1].startswith('-l') and ratio >= THRES:
+			if len(sys.argv[-1]) > 2:
+				makelog(file1, file2, ratio, logid=sys.argv[-1][2:])
 			else:
 				makelog(file1, file2, ratio, logid=0)
 	else:
