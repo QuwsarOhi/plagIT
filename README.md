@@ -16,8 +16,10 @@ Command instructions:
 Currently, two types of instructions are available. 
 
 * A versus check that checks for a match in single pair of files.
+
 command: "plagIT [filedirectory1] [filedirectory2]"
 
 * A batch check that checks for a match for all possible pairs of 
   files. All the files must be in the "codes" folder. 
+
 command: "plagIT"
