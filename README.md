@@ -21,6 +21,7 @@ Command Instruction:
 --------------------
 ```
 plagIT [-h] [-f file file] [-t threshold] [-l [filename]]
+
 Optional arguments:
   -h, --help     show this help message and exit
   -f file file   check plagiarism for two input files
